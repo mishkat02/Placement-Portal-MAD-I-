@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Admin Page </title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+</head>
+<body style="padding: 20px;">
+<div class="row mb-3">
+<nav class="navbar navbar-expand-lg bg-body-tertiary">
+  <div class="container-fluid">
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <b>Welcome, {{ username }}!</b>
+      <form class="d-flex ms-auto gap-2" action="{{ url_for('admin', username=username) }}" method="POST">
+        <input class="form-control me-2" type="search" name="search_query" placeholder="Search..." aria-label="Search">
+        <button class="btn btn-primary" type="submit">Search</button>
+        <a href="/" class="btn btn-success">Logout</a>
+      </form>
+    </div>
+  </div>
+</nav>
+</div>
+
+{% if query %}
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card p-3 shadow-sm">
+      <div class="d-flex justify-content-between">
+        <h4>Results for "{{ query }}"</h4>
+        <a href="{{ url_for('admin', username=username) }}" class="btn btn-sm btn-outline-secondary">Clear</a>
+      </div>
+      <hr>
+      <h6>Matches found:</h6>
+      <ul>
+        {% for s in results_s %}
+          <li><strong>Student:</strong> {{ s.student_name }}</li>
+        {% endfor %}
+        
+        {% for c in results_c %}
+          <li><strong>Company:</strong> {{ c.company_name }}</li>
+        {% endfor %}
+
+        {% if not results_s and not results_c %}
+          <li class="text-muted">No matches found.</li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="row mb-4">
+  <div class="col-md-3">
+      <div class="card text-center shadow-sm border-primary">
+          <div class="card-body">
+              <h6 class="text-muted">Total Students</h6>
+              <h3 class="text-primary">{{ stats.total_students }}</h3>
+          </div>
+      </div>
+  </div>
+  <div class="col-md-3">
+      <div class="card text-center shadow-sm border-success">
+          <div class="card-body">
+              <h6 class="text-muted">Total Companies</h6>
+              <h3 class="text-success">{{ stats.total_company }}</h3>
+          </div>
+      </div>
+  </div>
+  <div class="col-md-3">
+      <div class="card text-center shadow-sm border-warning">
+          <div class="card-body">
+              <h6 class="text-muted">Placement Drives</h6>
+              <h3 class="text-warning">{{ stats.total_drives }}</h3>
+          </div>
+      </div>
+  </div>
+  <div class="col-md-3">
+      <div class="card text-center shadow-sm border-info">
+          <div class="card-body">
+              <h6 class="text-muted">Applications</h6>
+              <h3 class="text-info">{{ stats.total_applications }}</h3>
+          </div>
+      </div>
+  </div>
+</div>
+
+<div class="row mb-3">
+  <div class="col-12">
+      <div class="card p-3 shadow-sm">
+          <h4>Registered Companies</h4>
+          <table class="table">
+            {% for comp in approved_companies %}
+            <tr>
+              <td> {{ comp.company_name}} </td>
+              <td class="d-flex justify-content-end">
+                <a href="{{url_for('blacklist_company', user_id = comp.user_id)}}"
+                 class="btn {{'btn-outline-success' if comp.user.is_blacklisted else 'btn-outline-danger'}}">
+                 {{ 'Un-blacklist' if comp.user.is_blacklisted else 'Blacklist' }}</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
+      </div>
+  </div>
+</div>
+
+<div class="row mb-3">
+  <div class="col-12">
+      <div class="card p-3 shadow-sm">
+          <h4>Registered Students</h4>
+          <table class="table">
+            {% for s in registered_students %}
+            <tr>
+              <td>{{ s.student_name }}</td>
+              <td>{{ s.college }}</td>
+              <td class="d-flex justify-content-end">
+                <a href="{{url_for('blacklist_student', user_id = s.user_id)}}"
+                 class="btn {{'btn-outline-success' if s.user.is_blacklisted else 'btn-outline-danger'}}">
+                 {{ 'Un-blacklist' if s.user.is_blacklisted else 'Blacklist' }}</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
+      </div>
+  </div>
+</div>
+
+<div class="row mb-3">
+  <div class="col-12">
+      <div class="card p-3 shadow-sm">
+          <h4>Company Applications</h4>
+          <table class='table'>
+            {% for comp in pending_companies%}
+            <tr>
+              <td>{{comp.company_name}}</td>
+              <td class="d-flex justify-content-end gap-2">
+                <a href="{{url_for('approve_company', company_id = comp.company_id)}}" class="btn btn-outline-success">Approve</a>
+                <a href="{{url_for('reject_company', company_id = comp.company_id)}}" class="btn btn-outline-danger">Reject</a>
+              </td>
+            </tr>
+            {% endfor %}
+
+          </table>
+      </div>
+  </div>
+</div>
+
+<div class="row mb-3"> 
+  <div class="col-12">
+      <div class="card p-3 shadow-sm">
+          <h4>Pending Drives</h4>
+          <table class="table text-center">
+            <thead>
+              <tr>
+                <th>Sr.No.</th>
+                <th>Drive ID</th>
+                <th>Job Title</th>
+                <th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for p in pending_drives%}
+            <tr>
+              <td>{{loop.index}}</td>
+              <td>{{p.drive_id}}</td>
+              <td>{{p.job_title}}</td>
+              <td class="text-end">
+                <a href="{{url_for('drive_details', drive_id = p.drive_id)}}" class="btn btn-outline-primary">View</a>
+                <a href="{{url_for('approve_drive', drive_id = p.drive_id)}}" class="btn btn-outline-success">Approve</a>
+                <a href="{{url_for('reject_drive', drive_id = p.drive_id)}}" class="btn btn-outline-danger">Reject</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          </table>
+      </div>
+  </div>
+</div>
+
+<div class="col-12">
+  <div class="card p-3 shadow-sm">
+      <h4>All Drives</h4>
+      <table class="table text-center">
+        <thead>
+          <tr>
+            <th>Sr.No.</th>
+            <th>Drive ID</th>
+            <th>Job Title</th>
+            <th>Drive Status</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for a in all_drives%}
+        <tr>
+          <td>{{loop.index}}</td>
+          <td>{{a.drive_id}}</td>
+          <td>{{a.job_title}}</td>
+          <td>{{a.drive_status}}</td>
+          <td class="text-end">
+            <a href="{{url_for('drive_details', drive_id = a.drive_id)}}" class="btn btn-outline-primary">View</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      </table>
+  </div>
+</div>
+</div>
+
+<div class="col-12">
+  <div class="card p-3 shadow-sm">
+      <h4>Closed Drives</h4>
+      <table class="table text-center">
+        <thead>
+          <tr>
+            <th>Sr.No.</th>
+            <th>Drive ID</th>
+            <th>Job Title</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for c in closed_drives%}
+        <tr>
+          <td>{{loop.index}}</td>
+          <td>{{c.drive_id}}</td>
+          <td>{{c.job_title}}</td>
+          <td class="text-end">
+            <a href="{{url_for('drive_details', drive_id = c.drive_id)}}" class="btn btn-outline-primary">View</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      </table>
+  </div>
+</div>
+
+
+<div class="row mb-3"> 
+  <div class="col-12">
+      <div class="card p-3 shadow-sm">
+          <h4>Student Application</h4>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Student Name</th>
+                <th>Company</th>
+                <th>Job Title</th>
+                <th>Application status</th>
+                <th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for a in all_applications%}
+              <tr>
+                <td>{{ a.student.student_name }}</td>
+                <td>{{ a.drive.company.company_name }}</td>
+                <td>{{ a.drive.job_title }}</td>
+                <td>{{a.application_status}}</td>
+                <td class="text-end">
+                  <a href="{{url_for('view_single_application',app_id = a.application_id)}}" class="btn btn-outline-primary">View</a>
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+      </div>
+  </div>
+
+</div>
+</body>
+</html>
